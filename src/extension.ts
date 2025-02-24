@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { getAISuggestion } from "./codeGeneration";
+import { activateBugFix } from "./bugFixes";  // Import bug fixing logic
 
 export function activate(context: vscode.ExtensionContext) {
     let disposable = vscode.commands.registerCommand("codeboost.helloWorld", async () => {
@@ -8,19 +9,16 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("No active editor found.");
             return;
         }
-
-        const document = editor.document;
-        const position = editor.selection.active; // Get cursor position
-
-        const suggestion = await getAISuggestion(document, position);
-        vscode.window.showInformationMessage(`AI Suggestion: ${suggestion}`);
+        vscode.window.showInformationMessage("Codeboost is live!");
     });
-
     context.subscriptions.push(disposable);
+
+    // Register bug fix button (separate process)
+    activateBugFix(context);
 
     // Inline Completion Provider
     const provider: vscode.InlineCompletionItemProvider = {
-        provideInlineCompletionItems: async (document, position, context, token) => {
+        provideInlineCompletionItems: async (document, position) => {
             const linePrefix = document.lineAt(position).text.substring(0, position.character);
             if (!linePrefix.trim()) return []; // Ignore empty lines
 
@@ -41,10 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
             ];
         }
     };
-
-    context.subscriptions.push(
-        vscode.languages.registerInlineCompletionItemProvider({ scheme: "file", language: "*" }, provider)
-    );
+    context.subscriptions.push(vscode.languages.registerInlineCompletionItemProvider({ scheme: "file", language: "*" }, provider));
 }
 
 export function deactivate() {}
