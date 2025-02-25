@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { getAISuggestion } from "./codeGeneration";
 import { activateBugFix } from "./bugFixes";
 import { runAndFixLoop } from "./autoBuild";
+import { trackCursorForSuggestions } from "./suggestFix";
 
 export function activate(context: vscode.ExtensionContext) {
     let disposable = vscode.commands.registerCommand("codeboost.helloWorld", async () => {
@@ -12,21 +13,23 @@ export function activate(context: vscode.ExtensionContext) {
     // Register bug fix button
     activateBugFix(context);
 
-    // Register auto-build command (User must trigger it manually)
-    let autoBuildCommand = vscode.commands.registerCommand("codeboost.autoBuild", async () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage("No active editor found.");
-            return;
-        }
+    // // Register auto-build command (User must trigger it manually)
+    // let autoBuildCommand = vscode.commands.registerCommand("codeboost.autoBuild", async () => {
+    //     const editor = vscode.window.activeTextEditor;
+    //     if (!editor) {
+    //         vscode.window.showErrorMessage("No active editor found.");
+    //         return;
+    //     }
         
-        try {
-            await runAndFixLoop(); // Only runs when manually triggered
-        } catch (error) {
-            vscode.window.showErrorMessage("AutoBuild encountered an error");
-        }
-    });
-    context.subscriptions.push(autoBuildCommand);
+    //     try {
+    //         await runAndFixLoop(); // Only runs when manually triggered
+    //     } catch (error) {
+    //         vscode.window.showErrorMessage("AutoBuild encountered an error");
+    //     }
+    // });
+    // context.subscriptions.push(autoBuildCommand);
+
+    trackCursorForSuggestions(context); // Use the auto-suggestions feature
 
     // Inline Completion Provider (No auto-build here)
     const provider: vscode.InlineCompletionItemProvider = {
