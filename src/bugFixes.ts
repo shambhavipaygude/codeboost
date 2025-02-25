@@ -4,9 +4,7 @@ import * as path from "path";
 import {GeminiResponse} from './interface'
 
 dotenv.config({ path: path.join(__dirname, "../.env") });
-
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 export function activateBugFix(context: vscode.ExtensionContext) {
@@ -50,8 +48,6 @@ ${errorMessage}
 
 Corrected Code:
 `;
-
-
     try {
         const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
             method: "POST",
@@ -68,7 +64,6 @@ Corrected Code:
             vscode.window.showInformationMessage("No issues detected.");
             return;
         }
-
         vscode.window.setStatusBarMessage("$(sync~spin) Applying fixes...", 3000);
         applyBugFix(document, fixSuggestion);
         showPet();
@@ -76,7 +71,6 @@ Corrected Code:
         console.error("AI API error:", error);
     }
 }
-
 
 function applyBugFix(document: vscode.TextDocument, fixSuggestion: string): void {
     const editor = vscode.window.activeTextEditor;
@@ -87,12 +81,10 @@ function applyBugFix(document: vscode.TextDocument, fixSuggestion: string): void
     if (lines.length > 1 && lines[0].startsWith("```") && lines[lines.length - 1].startsWith("```")) {
         fixSuggestion = lines.slice(1, -1).join("\n");
     }
-
     const fullRange = new vscode.Range(
         new vscode.Position(0, 0),
         new vscode.Position(document.lineCount - 1, document.lineAt(document.lineCount - 1).text.length)
     );
-
     editor.edit(editBuilder => {
         editBuilder.replace(fullRange, fixSuggestion);
     });
@@ -118,13 +110,9 @@ function showPet() {
         petPanel?.dispose();
         petPanel = undefined;
     }, 5000);
-
-    // petPanel.onDidDispose(() => {
-    //     petPanel = undefined;
-    // });
 }
 
-// 🖼 HTML to display pet GIF at bottom-left
+// display gif
 function getPetWebviewContent(): string {
     const petGifUrl = 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExd2ozdjl5cW02OHh6OW51eDY1MDJxa2Y4azV2Ym1vbnVhbmNrbDl5ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cCOVfFwDI3awdse5A3/giphy.gif'; // 🔹 Replace with your GIF URL
 

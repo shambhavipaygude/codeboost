@@ -5,3 +5,4 @@ export function getLastLines(document: vscode.TextDocument, line: number, count:
     return document.getText(new vscode.Range(startLine, 0, line, 0));
 }
 
+
