@@ -14,14 +14,12 @@ export function activateBugFix(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("No active editor found.");
             return;
         }
-        
         const document = editor.document;
         await checkForBugFixes(document);
     });
-
     context.subscriptions.push(disposable);
 
-    // Create a status bar button for bug fixing
+    // create status bar button for bug fixing
     const bugFixButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     bugFixButton.command = "codeboost.fixBugs";
     bugFixButton.text = "$(wrench) Fix Bugs";
@@ -36,18 +34,14 @@ export async function checkForBugFixes(document: vscode.TextDocument, errorMessa
     const codeContext = document.getText();
 
     const prompt = `
-Identify and fix any bugs in the following code snippet.
-
-Do NOT add explanations. Only return the corrected code always in markdown format with backticks on first and last line.
-
-Given Code:
-${codeContext}
-
-Error Message (if any):
-${errorMessage}
-
-Corrected Code:
-`;
+    Identify and fix any bugs in the following code snippet.\n
+    Do NOT add explanations. Only return the corrected code always in markdown format with backticks on first and last line.\n
+    Given Code:\n
+    ${codeContext}\n
+    Error Message (if any):\n
+    ${errorMessage}\n
+    Corrected Code:\n
+    `;
     try {
         const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
             method: "POST",
@@ -76,7 +70,7 @@ function applyBugFix(document: vscode.TextDocument, fixSuggestion: string): void
     const editor = vscode.window.activeTextEditor;
     if (!editor) return;
 
-    // Remove the first and last lines if they contain backticks
+    // removing first and last lines if they contain backticks
     const lines = fixSuggestion.split("\n");
     if (lines.length > 1 && lines[0].startsWith("```") && lines[lines.length - 1].startsWith("```")) {
         fixSuggestion = lines.slice(1, -1).join("\n");
@@ -114,7 +108,7 @@ function showPet() {
 
 // display gif
 function getPetWebviewContent(): string {
-    const petGifUrl = 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExd2ozdjl5cW02OHh6OW51eDY1MDJxa2Y4azV2Ym1vbnVhbmNrbDl5ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cCOVfFwDI3awdse5A3/giphy.gif'; // 🔹 Replace with your GIF URL
+    const petGifUrl = 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbmhwcnk5cmx5ZnU1YTRlZTduNDE0d3pyM2k2NHVkemV4eHA0OWVneSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/wSLgAC3rqQljfeQE2f/giphy.gif'; // 🔹 Replace with your GIF URL
 
     return `
         <!DOCTYPE html>
@@ -134,7 +128,7 @@ function getPetWebviewContent(): string {
                     z-index: 9999;
                 }
                 img {
-                    max-width: 80px; /* Adjust size as needed */
+                    max-width: 110px; /* Adjust size as needed */
                 }
             </style>
         </head>

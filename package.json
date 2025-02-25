@@ -15,7 +15,7 @@
     "commands": [
       {
         "command": "codeboost.helloWorld",
-        "title": "Hello World"
+        "title": "Codeboost"
       }
     ]
   },
