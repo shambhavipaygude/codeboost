@@ -6,7 +6,7 @@ import {GeminiResponse} from './interface'
 
 dotenv.config({ path: path.join(__dirname, "../.env") });
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 
 export async function getAISuggestion(document: vscode.TextDocument, position: vscode.Position): Promise<string> {
