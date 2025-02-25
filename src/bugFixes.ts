@@ -15,6 +15,7 @@ export function activateBugFix(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage("No active editor found.");
             return;
         }
+        
         const document = editor.document;
         await checkForBugFixes(document);
     });
@@ -36,16 +37,16 @@ export async function checkForBugFixes(document: vscode.TextDocument): Promise<v
     const codeContext = document.getText(); // Send entire document
 
     const prompt = `
-    Identify and fix any bugs in the following code snippet.\n
+    Identify and fix if any bugs in the following code snippet.\n
     Only respond if there are issues, otherwise remain silent.\n
-    Provide only the corrected code, replacing the incorrect parts.\n
+    Provide entire correct code only without any headings.\n
     Do NOT add explanations. Do NOT make up any code by yourself, if enough information is not provided remain silent.\n
     \n
     ---\n
     Code Snippet:\n
     ${codeContext}
     ---\n
-    Corrected Code (if needed):\n
+    Correct Code (if needed):\n
     `;
 
     try {
@@ -68,8 +69,9 @@ export async function checkForBugFixes(document: vscode.TextDocument): Promise<v
             vscode.window.showInformationMessage("No issues detected.");
             return;
         }
-
+        vscode.window.setStatusBarMessage("$(sync~spin) Applying fixes...", 3000);
         applyBugFix(document, fixSuggestion);
+        showPet();
     } catch (error) {
         console.error("AI API error:", error);
     }
@@ -84,4 +86,65 @@ function applyBugFix(document: vscode.TextDocument, fixSuggestion: string): void
     editor.edit(editBuilder => {
         editBuilder.replace(fullRange, fixSuggestion);
     });
+}
+
+let petPanel: vscode.WebviewPanel | undefined;
+function showPet() {
+    if (petPanel) {
+        petPanel.reveal(vscode.ViewColumn.Two);
+        return;
+    }
+
+    petPanel = vscode.window.createWebviewPanel(
+        "codePet",
+        "Bug Fix Pet",
+        vscode.ViewColumn.Two,
+        { enableScripts: true, retainContextWhenHidden: false }
+    );
+
+    petPanel.webview.html = getPetWebviewContent();
+
+    setTimeout(() => {
+        petPanel?.dispose();
+        petPanel = undefined;
+    }, 5000);
+
+    // petPanel.onDidDispose(() => {
+    //     petPanel = undefined;
+    // });
+}
+
+// 🖼 HTML to display pet GIF at bottom-left
+function getPetWebviewContent(): string {
+    const petGifUrl = 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExd2ozdjl5cW02OHh6OW51eDY1MDJxa2Y4azV2Ym1vbnVhbmNrbDl5ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cCOVfFwDI3awdse5A3/giphy.gif'; // 🔹 Replace with your GIF URL
+
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <style>
+                body {
+                    background-color: transparent;
+                    overflow: hidden;
+                    margin: 0;
+                    padding: 0;
+                }
+                .pet-container {
+                    position: fixed;
+                    bottom: 30px; /* Adjust to place above the status bar */
+                    left: 10px;
+                    z-index: 9999;
+                }
+                img {
+                    max-width: 80px; /* Adjust size as needed */
+                }
+            </style>
+        </head>
+        <body>
+            <div class="pet-container">
+                <img src="${petGifUrl}" alt="Pet">
+            </div>
+        </body>
+        </html>
+    `;
 }
