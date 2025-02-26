@@ -96,5 +96,6 @@ Here are some instructions to make your own copy of Codeboost and get started wi
 
 4. Codeboost is live!
 
-<video src='public/google_hack.mp4' width=180/>
+[![Watch the video](https://i.sstatic.net/Vp2cE.png)](public/google_hack.mp4
+)
 
