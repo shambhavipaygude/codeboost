@@ -49,6 +49,9 @@
 
 ---
 
+## Workflow 
+![Design and Approach](<public/workflow.jpg>) 
+
 
 ## Getting Started
 
@@ -95,5 +98,3 @@ Here are some instructions to make your own copy of Codeboost and get started wi
 
 <video src='public/google_hack.mp4' width=180/>
 
-## Workflow 
-![Design and Approach](<public/workflow.jpg>) 
