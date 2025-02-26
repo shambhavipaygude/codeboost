@@ -24,20 +24,19 @@
 
 ---
 
-<!-- ABOUT THE PROJECT -->
 ## About The Project
 
 **Codeboost** is a powerful **VS Code extension** designed to enhance developer productivity by automating **code completion, bug fixes, and builds**. It helps developers write code faster and with fewer errors by offering **AI-powered suggestions**, **real-time error detection**, and **one-click bug fixing & auto-build**.
 
 ---
 
-## Features 
+### Features 
 
-✔️ **AI-powered code completion** - Get real-time code suggestions as you type.  
-✔️ **Live bug detection & quick fixes** - Instantly spot and fix errors in your code.  
-✔️ **One-click auto-build** - Fix all bugs and compile your code with a single button.  
-✔️ **Seamless VS Code integration** - Works smoothly with your coding workflow.  
-✔️ **Minimal manual intervention** - Reduces debugging time, allowing you to focus on coding.  
+- **AI-powered code completion** - Get real-time code suggestions as you type.  
+- **Live bug detection & quick fixes** - Instantly spot and fix errors in your code.  
+- **One-click auto-build** - Fix all bugs and compile your code with a single button.  
+- **Seamless VS Code integration** - Works smoothly with your coding workflow.  
+- **Minimal manual intervention** - Reduces debugging time, allowing you to focus on coding.  
 
 ---
 
@@ -81,8 +80,6 @@ Here are some instructions to make your own copy of Codeboost and get started wi
    git remote -v # confirm the changes
    ```
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 ## Usage
 1. After cloning the repository, run these commands in terminal.
@@ -96,7 +93,7 @@ Here are some instructions to make your own copy of Codeboost and get started wi
 
 4. Codeboost is live!
 
-![Quick Demo](<public/google_hack.mp4>) 
+<video src='public/google_hack.mp4' width=180/>
 
 ## Workflow 
 ![Design and Approach](<public/workflow.jpg>) 
