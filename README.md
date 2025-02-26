@@ -19,6 +19,7 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
+    <li><a href="#current-limitations">Usage</a></li>
   </ol>
 </details>
 
@@ -98,3 +99,5 @@ Here are some instructions to make your own copy of Codeboost and get started wi
 
 https://github.com/user-attachments/assets/f4786c92-bca4-4501-936b-ae957a3d032b 
 
+## Current Limitations
+Due to continuous large number of API calls for auto-completion and suggestion of possible bugs, resource might get exhausted.
