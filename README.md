@@ -1,71 +1,102 @@
-# codeboost README
+<a id="readme-top"></a>
 
-This is the README for your extension "codeboost". After writing up a brief description, we recommend including the following sections.
-
-## Features
-
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+  </ol>
+</details>
 
 ---
 
-## Following extension guidelines
+<!-- ABOUT THE PROJECT -->
+## About The Project
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+**Codeboost** is a powerful **VS Code extension** designed to enhance developer productivity by automating **code completion, bug fixes, and builds**. It helps developers write code faster and with fewer errors by offering **AI-powered suggestions**, **real-time error detection**, and **one-click bug fixing & auto-build**.
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+---
 
-## Working with Markdown
+## Features 
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+✔️ **AI-powered code completion** - Get real-time code suggestions as you type.  
+✔️ **Live bug detection & quick fixes** - Instantly spot and fix errors in your code.  
+✔️ **One-click auto-build** - Fix all bugs and compile your code with a single button.  
+✔️ **Seamless VS Code integration** - Works smoothly with your coding workflow.  
+✔️ **Minimal manual intervention** - Reduces debugging time, allowing you to focus on coding.  
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+---
 
-## For more information
+### Built With 
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Node.js](https://nodejs.org/)
+- [VS Code API](https://code.visualstudio.com/api)
+- [Gemini API](https://ai.google.dev/)
 
-**Enjoy!**
+---
+
+
+## Getting Started
+
+Here are some instructions to make your own copy of Codeboost and get started with it locally.
+
+### Prerequisites
+
+  ```sh
+  npm install npm@latest -g
+  ```
+
+### Installation
+
+1. Clone the repo
+   ```sh
+   git clone https://github.com/shambhavipaygude/codeboost
+   ```
+2. Install NPM packages
+   ```sh
+   npm install
+   ```
+3. Make `.env` file and add your API credentials in it.
+   ```js
+   API_KEY = 'ENTER YOUR API KEY';
+   ```
+4. Change git remote url to avoid accidental pushes to base project
+   ```sh
+   git remote set-url origin https://github.com/shambhavipaygude/codeboost
+   git remote -v # confirm the changes
+   ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+## Usage
+1. After cloning the repository, run these commands in terminal.
+   ```sh
+   npm run compile
+   code .
+   ```
+2. Press FN + F5 to start deubug console and open Extension Development Host.
+   
+3. Press Ctrl + Shift + P and type Codeboost.
+
+4. Codeboost is live!
+
+![Quick Demo](<public/google_hack.mp4>) 
+
+## Workflow 
+![Design and Approach](<public/workflow.jpg>) 
