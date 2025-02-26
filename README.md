@@ -19,7 +19,7 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#current-limitations">Usage</a></li>
+    <li><a href="#current-limitations">Current Limitations</a></li>
   </ol>
 </details>
 
