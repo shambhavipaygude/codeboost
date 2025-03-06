@@ -23,7 +23,7 @@ export function activateBugFix(context: vscode.ExtensionContext) {
     const bugFixButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     bugFixButton.command = "codeboost.fixBugs";
     bugFixButton.text = "$(wrench) Fix Bugs";
-    bugFixButton.tooltip = "Click to analyze and fix bugs in the code";
+    bugFixButton.tooltip = "Click to analyze and fix syntactic errors in the code";
     bugFixButton.show();
     
     context.subscriptions.push(bugFixButton);
@@ -93,7 +93,7 @@ function showPet() {
 
     petPanel = vscode.window.createWebviewPanel(
         "codePet",
-        "Bug Fix Pet",
+        "Your Bug Fix Pet",
         vscode.ViewColumn.Two,
         { enableScripts: true, retainContextWhenHidden: false }
     );

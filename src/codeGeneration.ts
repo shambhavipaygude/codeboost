@@ -78,7 +78,6 @@ async function fetchAISuggestion(document: vscode.TextDocument, position: vscode
     }
 }
 
-// Debounced version of `fetchAISuggestion`
 const debouncedGetAISuggestion = debounce(fetchAISuggestion, 500);
 
 export async function getAISuggestion(document: vscode.TextDocument, position: vscode.Position): Promise<string> {

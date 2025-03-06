@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { getAISuggestion } from "./codeGeneration";
 import { activateBugFix } from "./bugFixes";
-import { trackCursorForSuggestions } from "./suggestFix";
+import { activateSuggestions } from "./suggestFix";
 import { activateAutoBuildButton } from "./autoBuild";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     activateBugFix(context); //bug fix button
     activateAutoBuildButton(context); //build button
-    trackCursorForSuggestions(context); // Use the auto-suggestions feature
+    activateSuggestions(context); // Use the auto-suggestions feature
 
     // Inline Completion Provider 
     const provider: vscode.InlineCompletionItemProvider = {
