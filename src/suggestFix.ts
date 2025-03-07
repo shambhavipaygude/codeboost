@@ -1,65 +1,3 @@
-// import * as vscode from "vscode";
-// import * as dotenv from "dotenv";
-// import * as path from "path";
-// import { GeminiResponse } from "./interface";
-
-// dotenv.config({ path: path.join(__dirname, "../.env") });
-// const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-// const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
-// if (!GEMINI_API_KEY) {
-//     vscode.window.showErrorMessage("GEMINI_API_KEY is missing. Please set it in your environment variables.");
-// }
-
-// async function getBugSuggestions(document: vscode.TextDocument): Promise<{ suggestion: string }> {
-//     const { default: fetch } = await import("node-fetch");
-//     const codeContext = document.getText();
-
-//     const prompt = `
-//     Identify and suggest if any bugs in the following code snippet. If no bugs detected, remain silent.
-//     Do NOT add explanations. Only respond in this format:\n
-//     {line no. of bug} - {type of bug} - {suggested fix (in very brief)}\n
-//     Given Code:\n
-//     ${codeContext}\n
-//     Response:\n
-//     `;
-
-//     try {
-//         const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-//             method: "POST",
-//             headers: { "Content-Type": "application/json" },
-//             body: JSON.stringify({
-//                 contents: [{ role: "user", parts: [{ text: prompt }] }],
-//             }),
-//         });
-//         if (!response.ok) {
-//             throw new Error(`API request failed with status: ${response.status}`);
-//         }
-//         const data = (await response.json()) as GeminiResponse;
-//         const suggestion = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-//         return { suggestion };
-//     } catch (error) {
-//         console.error("Error fetching bug suggestions:", error);
-//         vscode.window.showErrorMessage("Error fetching bug suggestions. Check the console for details.");
-//         return { suggestion: "" };
-//     }
-// }
-
-// // Track cursor and make suggestions every 3 modified lines
-// export function trackCursorForSuggestions(context: vscode.ExtensionContext) {
-//     let lastCheckedLine = 0;
-//     const disposable = vscode.workspace.onDidChangeTextDocument(async (event: vscode.TextDocumentChangeEvent) => {
-//         const document = event.document;
-//         if (document.lineCount > lastCheckedLine && (document.lineCount - lastCheckedLine) >= 3) {
-//             const { suggestion } = await getBugSuggestions(document);
-//             if (suggestion) {
-//                 vscode.window.showInformationMessage(suggestion);
-//             }
-//             lastCheckedLine = document.lineCount; 
-//         }
-//     });
-//     context.subscriptions.push(disposable);
-// }
-
 import * as vscode from "vscode";
 import * as dotenv from "dotenv";
 import * as path from "path";
@@ -78,14 +16,14 @@ let webviewPanel: vscode.WebviewPanel | undefined;
 
 async function getBugSuggestions(
     document: vscode.TextDocument
-): Promise<{ diagnostics: vscode.Diagnostic[]; suggestions: { line: number; type: string; fix: string }[] }> {
+): Promise<{ diagnostics: vscode.Diagnostic[]; suggestions: {type: string; fix: string }[] }> {
     const { default: fetch } = await import("node-fetch");
     const codeContext = document.getText();
 
     const prompt = `
-    Analyze the following code and identify any syntactic errors or logical bugs. 
+    Analyze the following code and identify any syntactic errors or logical bugs. If no issue found, stay silent. Do not hallucinate.
     Provide output in this format and make sure it is to the point:
-    {error line number} - {type of bug} - {suggested fix}\n
+    {type of bug} - {suggested fix}\n
     Code:\n
     ${codeContext}\n
     Response:\n
@@ -112,18 +50,18 @@ async function getBugSuggestions(
         console.log(suggestionText);
 
         const diagnostics: vscode.Diagnostic[] = [];
-        const suggestions: { line: number; type: string; fix: string }[] = [];
+        const suggestions: {type: string; fix: string }[] = [];
 
         suggestionText.split("\n").forEach((line) => {
-            const match = line.match(/(\d+) - (.+?) - (.+)/);
+            const match = line.match(/(.+?) - (.+)/);
             if (match) {
-                const lineNumber = parseInt(match[1], 10);
-                const errorType = match[2];
-                const fix = match[3];
+                const errorType = match[1];
+                const fix = match[2];
 
+                // Attach the diagnostic to the first character of the document
                 const range = new vscode.Range(
-                    new vscode.Position(lineNumber - 1, 0),
-                    new vscode.Position(lineNumber - 1, Number.MAX_SAFE_INTEGER)
+                    new vscode.Position(0, 0),
+                    new vscode.Position(0, 1)
                 );
 
                 const diagnostic = new vscode.Diagnostic(
@@ -134,7 +72,7 @@ async function getBugSuggestions(
                 diagnostic.source = "CodeBoost";
                 diagnostics.push(diagnostic);
 
-                suggestions.push({ line: lineNumber, type: errorType, fix });
+                suggestions.push({type: errorType, fix });
             }
         });
 
@@ -145,7 +83,134 @@ async function getBugSuggestions(
     }
 }
 
-function showWebview(suggestions: { line: number; type: string; fix: string }[]) {
+async function applyEachFix(errorType: string, fix: string) {
+    console.log("applyEachFix triggered with:", { errorType, fix });
+
+    const editor = vscode.window.visibleTextEditors.find(
+        (e) => e.viewColumn === vscode.ViewColumn.One
+    );
+    if (!editor) {
+        console.error("No active editor found.");
+        return;
+    }
+
+    console.log("Fetching full document text...");
+    const { default: fetch } = await import("node-fetch");
+    const document = editor.document;
+    const fullCode = document.getText();
+
+    console.log("Full code extracted:", fullCode);
+
+    const prompt = `
+    Here is the full code:
+    ${fullCode}\n
+    
+    There is an issue of ${errorType}\n
+    
+    Suggested fix: ${fix}\n
+    
+    Instructions:
+    - Rewrite **only** the line of error using the provided fix.\n
+    - **Do not** change any other part of the code.\n
+    - Ignore all other errors.\n
+    - Return the **entire code** in **Markdown format**, with the first and last lines containing backticks (\`\`\`).\n
+    `;
+
+    console.log("Generated prompt:", prompt);
+
+    try {
+        console.log("Making API request to Gemini...");
+        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+            }),
+        });
+
+        console.log("Response received:", response.status);
+
+        if (!response.ok) {
+            throw new Error(`API request failed with status: ${response.status}`);
+        }
+
+        const data = (await response.json()) as GeminiResponse;
+        console.log("Response Data:", data);
+
+        let fixedCode = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+
+        // Extract code between the first and last backticks
+        const match = fixedCode.match(/```[\s\S]*?\n([\s\S]*)\n```/);
+        if (match) {
+            fixedCode = match[1].trim();
+        }
+
+        if (!fixedCode) {
+            vscode.window.showErrorMessage("No valid response received from AI.");
+            return;
+        }
+
+        console.log("Applying fix...");
+        await editor.edit((editBuilder) => {
+            const fullRange = new vscode.Range(
+                new vscode.Position(0, 0),
+                new vscode.Position(document.lineCount, 0)
+            );
+            editBuilder.replace(fullRange, fixedCode);
+        });
+
+        vscode.window.showInformationMessage(`✅ Applied fix`);
+        
+    } catch (error) {
+        console.error("Error applying fix:", error);
+        vscode.window.showErrorMessage("❌ Error applying fix. See console for details.");
+    }
+}
+
+
+export function activateSuggestions(context: vscode.ExtensionContext) {
+    diagnosticCollection = vscode.languages.createDiagnosticCollection("CodeBoost");
+    context.subscriptions.push(diagnosticCollection);
+
+    let lastRequestTime = 0;
+
+vscode.workspace.onDidChangeTextDocument(async (event) => {
+    const document = event.document;
+    if (!document.languageId) return;
+
+    const newCode = document.getText();
+    const filePath = document.uri.fsPath;
+
+    if (lastProcessedCode.get(filePath) === newCode) {
+        return;
+    }
+
+    lastProcessedCode.set(filePath, newCode);
+
+    if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+    }
+
+    debounceTimeout = setTimeout(async () => {
+        const now = Date.now();
+        if (now - lastRequestTime < 5000) {
+            console.log("Skipping request due to rate limit.");
+            return; // Prevents too frequent API calls
+        }
+
+        lastRequestTime = now; // Update last request timestamp
+
+        const { diagnostics, suggestions } = await getBugSuggestions(document);
+        diagnosticCollection.set(document.uri, diagnostics);
+        if (suggestions.length > 0) {
+            showWebview(suggestions);
+        }
+    }, 2000); // Slightly increased debounce to 2 seconds
+});
+
+}
+
+function showWebview(suggestions: {type: string; fix: string }[]) {
     if (!webviewPanel) {
         webviewPanel = vscode.window.createWebviewPanel(
             "codeBoostSidebar",
@@ -159,37 +224,43 @@ function showWebview(suggestions: { line: number; type: string; fix: string }[])
         });
 
         webviewPanel.webview.onDidReceiveMessage((message) => {
+            console.log("Received message from Webview:", message);
             if (message.command === "applyFix") {
-                applyFix(message.line, message.fix);
+                applyEachFix(message.errorType, message.fix).then(() => {
+                    // Remove the applied fix from the suggestions array
+                    suggestions = suggestions.filter((s) => s.fix !== message.fix);
+
+                    // Ensure webviewPanel is still available before updating
+                    if (webviewPanel) {
+                        webviewPanel.webview.html = getWebviewContent(suggestions);
+                    }
+                });
             }
         });
+    } else {
+        // If webview already exists, update its content
+        webviewPanel.webview.html = getWebviewContent(suggestions);
     }
-
-    webviewPanel.webview.html = getWebviewContent(suggestions);
 }
 
-async function applyFix(lineNumber: number, fix: string) {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) return;
+function getWebviewContent(suggestions: {type: string; fix: string }[]) {
+    const suggestionHTML = suggestions
+        .map(s => `
+            <tr>
+                <td>${s.type}</td>
+                <td>${s.fix}</td>
+                <td><button onclick="sendFixToVSCode('${s.type.replace(/'/g, "\\'")}', '${s.fix.replace(/'/g, "\\'")}')">Apply Fix</button></td>
+            </tr>
+        `)
+        .join("");
 
-    const document = editor.document;
-    const line = document.lineAt(lineNumber - 1);
-
-    await editor.edit((editBuilder) => {
-        editBuilder.replace(line.range, fix);
-    });
-
-    vscode.window.showInformationMessage(`✅ Applied fix on line ${lineNumber}: ${fix}`);
-}
-
-function getWebviewContent(suggestions: { line: number; type: string; fix: string }[]) {
     return `
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>CodeBoost Suggestions</title>
+        <title>CodeBoost Sidebar</title>
         <style>
             body { font-family: Arial, sans-serif; padding: 10px; background-color: #1e1e1e; color: white; }
             h2 { font-size: 18px; margin-bottom: 10px; }
@@ -205,65 +276,21 @@ function getWebviewContent(suggestions: { line: number; type: string; fix: strin
         <h2>🔍 CodeBoost Suggestions</h2>
         <table>
             <tr>
-                <th>Line No.</th>
                 <th>Issue</th>
                 <th>Fix</th>
                 <th>Action</th>
             </tr>
-            ${suggestions
-                .map(
-                    (s) =>
-                        `<tr>
-                            <td>${s.line}</td>
-                            <td>${s.type}</td>
-                            <td>${s.fix}</td>
-                            <td><button onclick="applyFix(${s.line}, '${s.fix.replace(
-                                /'/g,
-                                "\\'"
-                            )}')">Apply</button></td>
-                        </tr>`
-                )
-                .join("")}
+            ${suggestionHTML}
         </table>
         <script>
-            const vscode = acquireVsCodeApi();
-            function applyFix(line, fix) {
-                vscode.postMessage({ command: "applyFix", line: line, fix: fix });
-            }
-        </script>
+        const vscode = acquireVsCodeApi();
+        function sendFixToVSCode(errorType, fix) {
+            vscode.postMessage({ command: "applyFix", errorType: errorType, fix: fix });
+        }
+    </script>
+
     </body>
     </html>`;
-}
-
-export function activateSuggestions(context: vscode.ExtensionContext) {
-    diagnosticCollection = vscode.languages.createDiagnosticCollection("CodeBoost");
-    context.subscriptions.push(diagnosticCollection);
-
-    vscode.workspace.onDidChangeTextDocument(async (event) => {
-        const document = event.document;
-        if (!document.languageId) return;
-
-        const newCode = document.getText();
-        const filePath = document.uri.fsPath;
-
-        if (lastProcessedCode.get(filePath) === newCode) {
-            return;
-        }
-
-        lastProcessedCode.set(filePath, newCode);
-
-        if (debounceTimeout) {
-            clearTimeout(debounceTimeout);
-        }
-
-        debounceTimeout = setTimeout(async () => {
-            const { diagnostics, suggestions } = await getBugSuggestions(document);
-            diagnosticCollection.set(document.uri, diagnostics);
-            if (suggestions.length > 0) {
-                showWebview(suggestions);
-            }
-        }, 1000);
-    });
 }
 
 
