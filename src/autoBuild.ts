@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { checkForBugFixes } from "./bugFixes"; 
 
-function getBuildCommand(document: vscode.TextDocument): string | null {
+export function getBuildCommand(document: vscode.TextDocument): string | null {
     const fileName = document.fileName;
     if (fileName.endsWith(".py")) {
         return `python "${fileName}"`; // Python
@@ -27,7 +27,7 @@ function getBuildCommand(document: vscode.TextDocument): string | null {
     return null; // Unsupported file type
 }
 
-async function runBuild(document: vscode.TextDocument) {
+export async function runBuild(document: vscode.TextDocument) {
     const terminal = vscode.window.createTerminal("Auto Build");
 
     try {

@@ -3,6 +3,7 @@ import { getAISuggestion } from "./codeGeneration";
 import { activateBugFix } from "./bugFixes";
 import { activateSuggestions } from "./suggestFix";
 import { activateAutoBuildButton } from "./autoBuild";
+import {activateTestRunner} from "./testRunner";
 
 export function activate(context: vscode.ExtensionContext) {
     let disposable = vscode.commands.registerCommand("codeboost.helloWorld", async () => {
@@ -17,7 +18,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     activateBugFix(context); //bug fix button
     activateAutoBuildButton(context); //build button
-    activateSuggestions(context); // Use the auto-suggestions feature
+    activateTestRunner(context); //test case generator button
+    activateSuggestions(context); // auto-suggestions feature
 
     // Inline Completion Provider 
     const provider: vscode.InlineCompletionItemProvider = {
