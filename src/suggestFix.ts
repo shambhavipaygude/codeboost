@@ -2,7 +2,8 @@ import * as vscode from "vscode";
 import * as dotenv from "dotenv";
 import * as path from "path";
 import { GeminiResponse } from "./interface";
-
+import {applyEachFix} from "./applyEachFix";
+import {getWebviewContent} from "./webView";
 dotenv.config({ path: path.join(__dirname, "../.env") });
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -23,7 +24,7 @@ async function getBugSuggestions(
     const prompt = `
     Analyze the following code and identify any syntactic errors or logical bugs. If no issue found, stay silent. Do not hallucinate.
     Provide output in this format and make sure it is to the point:
-    {type of bug} - {suggested fix}\n
+    type of bug - suggested fix\n
     Code:\n
     ${codeContext}\n
     Response:\n
@@ -82,91 +83,6 @@ async function getBugSuggestions(
         return { diagnostics: [], suggestions: [] };
     }
 }
-
-async function applyEachFix(errorType: string, fix: string) {
-    console.log("applyEachFix triggered with:", { errorType, fix });
-
-    const editor = vscode.window.visibleTextEditors.find(
-        (e) => e.viewColumn === vscode.ViewColumn.One
-    );
-    if (!editor) {
-        console.error("No active editor found.");
-        return;
-    }
-
-    console.log("Fetching full document text...");
-    const { default: fetch } = await import("node-fetch");
-    const document = editor.document;
-    const fullCode = document.getText();
-
-    console.log("Full code extracted:", fullCode);
-
-    const prompt = `
-    Here is the full code:
-    ${fullCode}\n
-    
-    There is an issue of ${errorType}\n
-    
-    Suggested fix: ${fix}\n
-    
-    Instructions:
-    - Rewrite **only** the line of error using the provided fix.\n
-    - **Do not** change any other part of the code.\n
-    - Ignore all other errors.\n
-    - Return the **entire code** in **Markdown format**, with the first and last lines containing backticks (\`\`\`).\n
-    `;
-
-    console.log("Generated prompt:", prompt);
-
-    try {
-        console.log("Making API request to Gemini...");
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-            }),
-        });
-
-        console.log("Response received:", response.status);
-
-        if (!response.ok) {
-            throw new Error(`API request failed with status: ${response.status}`);
-        }
-
-        const data = (await response.json()) as GeminiResponse;
-        console.log("Response Data:", data);
-
-        let fixedCode = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-
-        // Extract code between the first and last backticks
-        const match = fixedCode.match(/```[\s\S]*?\n([\s\S]*)\n```/);
-        if (match) {
-            fixedCode = match[1].trim();
-        }
-
-        if (!fixedCode) {
-            vscode.window.showErrorMessage("No valid response received from AI.");
-            return;
-        }
-
-        console.log("Applying fix...");
-        await editor.edit((editBuilder) => {
-            const fullRange = new vscode.Range(
-                new vscode.Position(0, 0),
-                new vscode.Position(document.lineCount, 0)
-            );
-            editBuilder.replace(fullRange, fixedCode);
-        });
-
-        vscode.window.showInformationMessage(`✅ Applied fix`);
-        
-    } catch (error) {
-        console.error("Error applying fix:", error);
-        vscode.window.showErrorMessage("❌ Error applying fix. See console for details.");
-    }
-}
-
 
 export function activateSuggestions(context: vscode.ExtensionContext) {
     diagnosticCollection = vscode.languages.createDiagnosticCollection("CodeBoost");
@@ -242,55 +158,4 @@ function showWebview(suggestions: {type: string; fix: string }[]) {
         webviewPanel.webview.html = getWebviewContent(suggestions);
     }
 }
-
-function getWebviewContent(suggestions: {type: string; fix: string }[]) {
-    const suggestionHTML = suggestions
-        .map(s => `
-            <tr>
-                <td>${s.type}</td>
-                <td>${s.fix}</td>
-                <td><button onclick="sendFixToVSCode('${s.type.replace(/'/g, "\\'")}', '${s.fix.replace(/'/g, "\\'")}')">Apply Fix</button></td>
-            </tr>
-        `)
-        .join("");
-
-    return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>CodeBoost Sidebar</title>
-        <style>
-            body { font-family: Arial, sans-serif; padding: 10px; background-color: #1e1e1e; color: white; }
-            h2 { font-size: 18px; margin-bottom: 10px; }
-            table { width: 100%; border-collapse: collapse; font-size: 14px; }
-            th, td { padding: 8px; text-align: left; border-bottom: 1px solid #555; }
-            th { background-color: #333; color: white; }
-            tr:hover { background-color: #444; }
-            button { background-color: #4CAF50; color: white; border: none; padding: 5px 10px; cursor: pointer; }
-            button:hover { background-color: #45a049; }
-        </style>
-    </head>
-    <body>
-        <h2>🔍 CodeBoost Suggestions</h2>
-        <table>
-            <tr>
-                <th>Issue</th>
-                <th>Fix</th>
-                <th>Action</th>
-            </tr>
-            ${suggestionHTML}
-        </table>
-        <script>
-        const vscode = acquireVsCodeApi();
-        function sendFixToVSCode(errorType, fix) {
-            vscode.postMessage({ command: "applyFix", errorType: errorType, fix: fix });
-        }
-    </script>
-
-    </body>
-    </html>`;
-}
-
 
