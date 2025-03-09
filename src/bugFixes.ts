@@ -91,14 +91,12 @@ function showPet() {
         petPanel.reveal(vscode.ViewColumn.Two);
         return;
     }
-
     petPanel = vscode.window.createWebviewPanel(
         "codePet",
         "Your Bug Fix Pet",
         vscode.ViewColumn.Two,
         { enableScripts: true, retainContextWhenHidden: false }
     );
-
     petPanel.webview.html = getPetWebviewContent();
 
     setTimeout(() => {

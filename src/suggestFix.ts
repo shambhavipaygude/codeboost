@@ -114,8 +114,7 @@ vscode.workspace.onDidChangeTextDocument(async (event) => {
             return; // Prevents too frequent API calls
         }
 
-        lastRequestTime = now; // Update last request timestamp
-
+        lastRequestTime = now; 
         const { diagnostics, suggestions } = await getBugSuggestions(document);
         diagnosticCollection.set(document.uri, diagnostics);
         if (suggestions.length > 0) {
@@ -123,7 +122,6 @@ vscode.workspace.onDidChangeTextDocument(async (event) => {
         }
     }, 2000); // Slightly increased debounce to 2 seconds
 });
-
 }
 
 function showWebview(suggestions: {type: string; fix: string }[]) {
@@ -143,10 +141,7 @@ function showWebview(suggestions: {type: string; fix: string }[]) {
             console.log("Received message from Webview:", message);
             if (message.command === "applyFix") {
                 applyEachFix(message.errorType, message.fix).then(() => {
-                    // Remove the applied fix from the suggestions array
                     suggestions = suggestions.filter((s) => s.fix !== message.fix);
-
-                    // Ensure webviewPanel is still available before updating
                     if (webviewPanel) {
                         webviewPanel.webview.html = getWebviewContent(suggestions);
                     }
@@ -154,7 +149,6 @@ function showWebview(suggestions: {type: string; fix: string }[]) {
             }
         });
     } else {
-        // If webview already exists, update its content
         webviewPanel.webview.html = getWebviewContent(suggestions);
     }
 }

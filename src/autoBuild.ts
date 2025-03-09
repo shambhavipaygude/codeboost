@@ -1,43 +1,51 @@
 import * as vscode from "vscode";
+import * as path from "path";
 import { checkForBugFixes } from "./bugFixes"; 
 
-export function getBuildCommand(document: vscode.TextDocument): string | null {
-    const fileName = document.fileName;
-    if (fileName.endsWith(".py")) {
-        return `python "${fileName}"`; // Python
-    } else if (fileName.endsWith(".cpp")) {
-        return `g++ "${fileName}" -o output && ./output`; // C++
-    } else if (fileName.endsWith(".java")) {
-        return `javac "${fileName}" && java "${fileName.replace(".java", "")}"`; // Java
-    } else if (fileName.endsWith(".js")) {
-        return `node "${fileName}"`; // JavaScript
-    } else if (fileName.endsWith(".ts")) {
-        return `tsc "${fileName}" && node "${fileName.replace(".ts", ".js")}"`; // TypeScript
-    } else if (fileName.endsWith(".go")) {
-        return `go run "${fileName}"`; // Go
-    } else if (fileName.endsWith(".rs")) {
-        return `rustc "${fileName}" -o output && ./output`; // Rust
-    } else if (fileName.endsWith("package.json")) {
-        return `npm run build`; // React or Node.js projects
-    } else if (fileName.endsWith("Cargo.toml")) {
-        return `cargo build && cargo run`; // Rust Cargo projects
-    } else if (fileName.endsWith("Makefile")) {
-        return `make`; // General Makefile projects
-    }
-    return null; // Unsupported file type
+export function detectLanguage(document: vscode.TextDocument): string | null {
+  const ext = path.extname(document.fileName);
+  const langMap: Record<string, string> = {
+    ".py": "Python",
+    ".java": "Java",
+    ".c": "C",
+    ".cpp": "C++",
+    ".go": "Go",
+    ".rs": "Rust",
+    ".js": "JavaScript",
+    ".ts": "TypeScript",
+  };
+  return langMap[ext] || null;
+}
+
+export function getBuildCommand(filePath: string, language: string): string | null {
+  const baseName = path.basename(filePath, path.extname(filePath));
+  const commands: Record<string, string> = {
+    "Python": `python "${filePath}"`,
+    "Java": `javac "${filePath}" && java ${baseName}`,
+    "C": `gcc "${filePath}" -o "${baseName}.out" && ./"${baseName}.out"`,
+    "C++": `g++ "${filePath}" -o "${baseName}.out" && ./"${baseName}.out"`,
+    "Go": `go run "${filePath}"`,
+    "Rust": `rustc "${filePath}" -o "${baseName}.out" && ./"${baseName}.out"`,
+    "JavaScript": `node "${filePath}"`,
+    "TypeScript": `tsc "${filePath}" && node "${baseName}.js"`,
+  };
+  return commands[language] || null;
 }
 
 export async function runBuild(document: vscode.TextDocument) {
-    const terminal = vscode.window.createTerminal("Auto Build");
-
     try {
         vscode.window.showInformationMessage("Fixing bugs before build...");
         await checkForBugFixes(document);
     
         //small delay to ensure all bugs fixed
         await new Promise(resolve => setTimeout(resolve, 2000)); 
-    
-        const buildCommand = getBuildCommand(document);
+        const language = detectLanguage(document)
+        if (!language) {
+            vscode.window.showErrorMessage("Unsupported file type for testing.");
+            return;
+        }
+        const filePath = document.uri.fsPath;
+        const buildCommand = getBuildCommand(filePath, language);
         if (!buildCommand) {
             vscode.window.showErrorMessage("Unsupported file type for build.");
             return;

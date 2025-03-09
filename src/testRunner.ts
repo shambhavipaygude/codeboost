@@ -1,34 +1,13 @@
 import * as vscode from "vscode";
 import { execSync } from "child_process";
+import {getBuildCommand, detectLanguage} from "./autoBuild";
 import * as fs from "fs";
-import * as path from "path";
 import axios from "axios";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
-/**
- * Detect programming language based on file extension.
- */
-function detectLanguage(document: vscode.TextDocument): string | null {
-  const ext = path.extname(document.fileName);
-  const langMap: Record<string, string> = {
-    ".py": "Python",
-    ".java": "Java",
-    ".c": "C",
-    ".cpp": "C++",
-    ".go": "Go",
-    ".rs": "Rust",
-    ".js": "JavaScript",
-    ".ts": "TypeScript",
-  };
-  return langMap[ext] || null;
-}
-
-/**
- * Generate 15 test cases dynamically using Gemini API.
- */
 async function generateTestCases(
   filePath: string,
   language: string
@@ -36,19 +15,16 @@ async function generateTestCases(
   const code = fs.readFileSync(filePath, "utf-8");
 
   const prompt = `
-Analyze the following ${language} code and generate 15 diverse test cases.
-Ensure that inputs match the expected format used by the program.
-
-Return test cases in this JSON format:
-
+Analyze the following ${language} code and generate 15 diverse test cases. No input for any testcase can be empty.\n
+Ensure that inputs match the expected format used by the program.\n
+Return test cases in this JSON format:\n
 [
     { "input": "<input_value>", "output": "<expected_output>" },
     ...
 ]
+Make sure outputs strictly match expected program behavior.\n
 
-Make sure outputs strictly match expected program behavior.
-
-Code:
+Code:\n
 ${code}
 `;
 
@@ -62,8 +38,6 @@ ${code}
 
     let rawResponse =
       response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-    // Clean response (removes unwanted formatting)
     rawResponse = rawResponse.replace(/```json/g, "").replace(/```/g, "").trim();
 
     const testCases = JSON.parse(rawResponse);
@@ -80,7 +54,7 @@ async function runTestCases(
     testCases: { input: string; output: string }[]
   ): Promise<void> {
     const outputChannel = vscode.window.createOutputChannel("CodeBoost Tests");
-    outputChannel.show(true); // Show output panel
+    outputChannel.show(true); // show output panel
     outputChannel.appendLine(`Running tests for ${filePath} (${language})\n`);
   
     let passed = 0,
@@ -94,9 +68,7 @@ async function runTestCases(
       outputChannel.appendLine(`TEST ${i + 1}:`);
       outputChannel.appendLine(`Input: ${inputData ? `"${inputData}"` : "(empty input)"}`);
       outputChannel.appendLine(`Expected Output: "${expectedOutput}"`);
-  
-      const command = buildCommand(filePath, language);
-  
+      const command = getBuildCommand(filePath, language);
       if (!command) {
         outputChannel.appendLine(`⚠ Unsupported language: ${language}`);
         return;
@@ -124,7 +96,6 @@ async function runTestCases(
         failed++;
       }
     }
-  
     outputChannel.appendLine(`\n✅ ${passed}/${passed + failed} test cases passed.`);
     outputChannel.appendLine(`❌ ${failed}/${passed + failed} test cases failed.\n`);
   
@@ -133,29 +104,6 @@ async function runTestCases(
     }
   }
   
-/**
- * Build the execution command based on language.
- */
-function buildCommand(filePath: string, language: string): string | null {
-  const baseName = path.basename(filePath, path.extname(filePath));
-
-  const commands: Record<string, string> = {
-    "Python": `python "${filePath}"`,
-    "Java": `javac "${filePath}" && java ${baseName}`,
-    "C": `gcc "${filePath}" -o "${baseName}.out" && ./"${baseName}.out"`,
-    "C++": `g++ "${filePath}" -o "${baseName}.out" && ./"${baseName}.out"`,
-    "Go": `go run "${filePath}"`,
-    "Rust": `rustc "${filePath}" -o "${baseName}.out" && ./"${baseName}.out"`,
-    "JavaScript": `node "${filePath}"`,
-    "TypeScript": `tsc "${filePath}" && node "${baseName}.js"`,
-  };
-
-  return commands[language] || null;
-}
-
-/**
- * Activate Test Runner
- */
 export function activateTestRunner(context: vscode.ExtensionContext) {
   const disposable = vscode.commands.registerCommand(
     "codeboost.runTests",
@@ -165,16 +113,13 @@ export function activateTestRunner(context: vscode.ExtensionContext) {
         vscode.window.showErrorMessage("No active editor found.");
         return;
       }
-
       const document = editor.document;
       const language = detectLanguage(document);
       const filePath = document.uri.fsPath;
-
       if (!language) {
         vscode.window.showErrorMessage("Unsupported file type for testing.");
         return;
       }
-
       vscode.window.showInformationMessage(`Detecting language: ${language}`);
       vscode.window.showInformationMessage(`Generating test cases`);
       const testCases = await generateTestCases(filePath, language);
@@ -189,7 +134,6 @@ export function activateTestRunner(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(disposable);
-
   const testButton = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100
