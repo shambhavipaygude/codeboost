@@ -27,14 +27,14 @@
 
 ## About The Project
 
-**Codeboost** is a **VS Code extension** designed to boost developer productivity by automating **code completion, bug fixes, and builds**. It helps developers write code faster and with fewer errors by offering **AI-powered suggestions**, **real-time error detection**, and **one-click bug fixing & auto-build**.
+**Codeboost** is a **VS Code extension** designed to boost developer productivity by automating **code completion, bug fixes with GUI, automated builds and testing**. It helps developers write code faster and with fewer errors by offering **AI-powered suggestions**, **real-time error detection**, and **one-click bug fixing & auto-build**.
 
 ---
 
 ### Features 
 
 - **AI-powered code completion** - Get real-time code suggestions as you type.  
-- **Live bug detection & quick fixes** - Instantly spot and fix errors in your code.  
+- **Live bug detection & quick fixes with GUI** - Instantly spot and fix errors in your code.  
 - **One-click auto-build** - Fix all bugs and compile your code with a single button.  
 - **Seamless VS Code integration** - Works smoothly with your coding workflow.  
 - **Minimal manual intervention** - Reduces debugging time, allowing you to focus on coding.  
